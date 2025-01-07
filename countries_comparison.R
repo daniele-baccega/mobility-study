@@ -167,14 +167,15 @@ countries_comparison <- function(dir_name_comparison, dir_name_models, countries
   
   # Clustering (K-means and CONNECTOR)
   plots <- list()
-  plots <- clustering(ratio_mobinf_all, "mobinf", 9, c(2, 5), c(2, 5), dir_name_comparison, plots)
-  plots <- clustering(ratio_resinf_all, "resinf", 8, c(2, 5), c(2, 3, 5), dir_name_comparison, plots)
-  plots <- clustering(ratio_resmob_all, "resmob", 8, c(2, 5), c(2, 3, 5), dir_name_comparison, plots)
+  plots <- clustering(ratio_resmob_all, "resmob", 8, c(2, 5, 6), c(2, 3, 5), dir_name_comparison, plots)
+  plots <- clustering(ratio_mobinf_all, "mobinf", 11, c(2, 5, 6), c(2, 5, 6), dir_name_comparison, plots)
+  plots <- clustering(ratio_resinf_all, "resinf", 11, c(2, 5, 6), c(2, 3, 6), dir_name_comparison, plots)
+  
   
 
   # Clustering plots with K-means
   # Average
-  p <- plots[[11]] / plots[[15]] / plots[[1]] / plots[[3]] / plots[[5]] / plots[[7]]  +
+  p <- plots[[1]] / plots[[5]] / plots[[7]] / plots[[9]] / plots[[13]] / plots[[15]] +
     plot_layout(guides = "collect", axis_titles = "collect") &
     theme(legend.position = "bottom", legend.box = "vertical")
   
@@ -183,7 +184,7 @@ countries_comparison <- function(dir_name_comparison, dir_name_models, countries
   dev.off()
   
   # Average + standard deviation
-  p <- plots[[12]] / plots[[14]] / plots[[2]] / plots[[6]]  +
+  p <- plots[[2]] / plots[[4]] / plots[[8]] / plots[[12]] / plots[[14]] / plots[[18]] +
     plot_layout(guides = "collect", axis_titles = "collect") &
     theme(legend.position = "bottom", legend.box = "vertical")
   
@@ -208,7 +209,8 @@ clustering <- function(data, type, p_selected, G_clusters, k_clusters, dir_name_
     "#6FFF6D",
     "#6DBBFF",
     "#D68B4D",
-    "#9A6DFF"
+    "#9A6DFF",
+    "#FFB3FC"
   )
   
   title_mapping <- c("mobinf"="AvgMobOnInfRates(t)", "resmob"="ComplStrIdxOnAvgMob(t)", "resinf"="ComplStrIdxOnInfRates(t)")
@@ -291,7 +293,7 @@ clustering <- function(data, type, p_selected, G_clusters, k_clusters, dir_name_
     p <- ggplot(data=combined_data, aes(x = mean, y = 0, color = as.factor(kmeans))) +
       geom_point(data=data_local_cluster_mean, aes(shape = "Data"), size = 20, alpha = 0.7) +
       geom_point(data=centers_mean, aes(shape = "Centroids"), size = 20, stroke = 4) +
-      geom_text(data = combined_data, aes(label = country_short_col), vjust = -3, hjust = 0.5, size = 5, color = "black") +
+      geom_text(data = combined_data, aes(label = country_short_col), vjust = -2, hjust = 0.5, size = 10, color = "black") +
       theme_minimal() +
       labs(title=paste0(title_mapping[type], " ", k_clusters[i], " clusters"), x = "Mean", y = "", color = "Cluster", shape = "Type") +
       scale_shape_manual(values = c("Data" = 16, "Centroids" = 4)) +
@@ -337,7 +339,7 @@ clustering <- function(data, type, p_selected, G_clusters, k_clusters, dir_name_
         size = 20,
         stroke = 4
       ) +
-      geom_text(data = combined_data, aes(label = country_short_col), vjust = -3, hjust = 0.5, size = 5, color = "black") +
+      geom_text(data = combined_data, aes(label = country_short_col), vjust = -2, hjust = 0.5, size = 10, color = "black") +
       theme_minimal() +
       labs(
         title=paste0(title_mapping[type], " ", k_clusters[i], " clusters"),
@@ -359,7 +361,7 @@ clustering <- function(data, type, p_selected, G_clusters, k_clusters, dir_name_
       ) +
       ylim(min(data_local_cluster_meanstd$std) - 0.3, max(data_local_cluster_meanstd$std) + 0.3) +
       xlim(min(data_local_cluster_meanstd$mean), max(data_local_cluster_meanstd$mean)) +
-      guides(fill = "none", color =if(k_clusters[i] != 3) "none")
+      guides(fill = "none", color = if(k_clusters[i] != 6) "none")
     print(p)
     dev.off()
     
@@ -376,7 +378,7 @@ clustering <- function(data, type, p_selected, G_clusters, k_clusters, dir_name_
     mutate(ID = recode(country, !!!custom_order), Observation = value, Time = date) %>%
     select(ID, Observation, Time)
   data_local$Time <- as.numeric(data_local$Time)
-  data_ann <- data.frame(ID=unname(custom_order), country=names(custom_order), row.names = NULL)
+  data_ann <- data.frame(ID=unname(custom_order), Country=names(custom_order), row.names = NULL)
 
   CONNECTORList <- DataFrameImport(data_local, data_ann)
 
@@ -386,6 +388,7 @@ clustering <- function(data, type, p_selected, G_clusters, k_clusters, dir_name_
   png(paste0(dir_name_comparison, "CrossLogLikePlot_", type, ".png"), units="in", width=34, height=15, res=300)
   p <- ggplot_build(CrossLogLike$CrossLogLikePlot)
   p$plot <- p$plot +
+    labs(title = paste0("Cross-LogLikelihood Plot (", title_mapping[type], ")")) +
     theme(title = element_text(size = 34), axis.title = element_text(size = 26), axis.text = element_text(size = 22), legend.title = element_text(size = 30), legend.text = element_text(size = 24))
     print(p$plot)
   dev.off()
@@ -403,6 +406,7 @@ clustering <- function(data, type, p_selected, G_clusters, k_clusters, dir_name_
   png(paste0(dir_name_comparison, "indexesPlot_", type, ".png"), units="in", width=34, height=15, res=300)
   p <- ggplot_build(indexes$Plot)
   p$plot <- p$plot +
+    labs(title = title_mapping[type]) +
     theme(title = element_text(size = 34), axis.title = element_text(size = 26), axis.text = element_text(size = 22), legend.title = element_text(size = 30), legend.text = element_text(size = 24))
   print(p$plot)
   dev.off()
@@ -423,11 +427,12 @@ clustering <- function(data, type, p_selected, G_clusters, k_clusters, dir_name_
       G = G_clusters[i])
 
     FCMplots <- ClusterWithMeanCurve(clusterdata = CONNECTORList.FCM.opt,
-                                     feature = "country",
-                                     labels = c("Time", "Ratio"))
+                                     feature = "Country",
+                                     labels = c("Day", "Ratio"))
 
     png(paste0(dir_name_comparison, "clustering_connector_", type, "_", G_clusters[i], ".png"), units="in", width=34, height=15, res=300)
     plot <- FCMplots$plotsCluster$ALL +
+      labs(title = paste0("Other parameters p = ", p_selected, ", h = ", G_clusters[i] - 1, ", G = ", G_clusters[i], " (", title_mapping[type], ")")) +
       theme(title = element_text(size = 34), axis.title = element_text(size = 26), axis.text = element_text(size = 22), legend.title = element_text(size = 30), legend.text = element_text(size = 24), strip.text.x = element_text(size=30))
     print(plot)
     dev.off()

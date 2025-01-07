@@ -45,7 +45,7 @@ infection_rates_I_plot <- function(dir_name_plots, country_long_en, infection_ra
 #   - infections_rates:     infection rates
 #   - country_long:         long country name
 #   - mob_type:             Facebook or Google
-mobility_plot <- function(dir_name, dates, restrictions, response, infection_rates, country_long, mob_type){
+mobility_plot <- function(dir_name, dates, restrictions, response, infection_rates, country_long, mob_type, plots){
   corr_indeces <- which(complete.cases(response$residential_moved, response$workplaces_moved, response$transit_stations_moved, response$retail_and_recreation_moved, response$grocery_and_pharmacy_stores_moved, response$PCA_mobility_moved, response$masks_moved, infection_rates$value, restrictions$StringencyIndex_Average_moved))
 
   infection_rates_series <- infection_rates$value[corr_indeces]
@@ -75,8 +75,12 @@ mobility_plot <- function(dir_name, dates, restrictions, response, infection_rat
     scale_color_manual(values = c("#2FFFCE", "#494949", "#985453", "#6B95DB", "#c3cb71", "#ff8b94", "#559e83", "#c9c9ff")) +
     theme(legend.position = "bottom", title = element_text(size = 34), axis.title = element_text(size = 26), axis.text = element_text(size = 22), legend.title = element_text(size = 30), legend.text = element_text(size = 24)) +
     guides(color = guide_legend(override.aes = list(size = 16), nrow=3, byrow=TRUE))
+  
+  if(mob_type == "Facebook") plot <- plot + ylim(0, 1) else plot <- plot + ylim(-1, 1)
   print(plot)
   dev.off()
+  
+  plots[[length(plots) + 1]] <- plot
   
 
   value <- c(normalize(masks_series), normalize(residential_series), normalize(workplaces_series), normalize(transit_stations_series), normalize(retail_and_recreation_series), normalize(grocery_and_pharmacy_stores_series), normalize(infection_rates_series), normalize(stringency_index_series))
@@ -107,8 +111,9 @@ mobility_plot <- function(dir_name, dates, restrictions, response, infection_rat
     labs(x = "Date", y = "Values", color = "Type", title = country_long) +
     theme_bw() +
     scale_color_manual(values = c("#494949", "#ae5a41")) +
+    ylim(-1, 1) +
     theme(legend.position = "bottom", title = element_text(size = 34), axis.title = element_text(size = 26), axis.text = element_text(size = 22), legend.title = element_text(size = 30), legend.text = element_text(size = 24)) +
-    guides(color = guide_legend(override.aes = list(size = 16), nrow=1, byrow=TRUE)) 
+    guides(color = guide_legend(override.aes = list(size = 16), nrow=1, byrow=TRUE))
   print(plot)
   dev.off()
   
@@ -143,8 +148,9 @@ mobility_plot <- function(dir_name, dates, restrictions, response, infection_rat
     labs(x = "Date", y = "Values", color = "Type", title = country_long) +
     theme_bw() +
     scale_color_manual(values = c("#ae5a41", "#ff8b94")) +
+    ylim(-1, 1) +
     theme(legend.position = "bottom", title = element_text(size = 34), axis.title = element_text(size = 26), axis.text = element_text(size = 22), legend.title = element_text(size = 30), legend.text = element_text(size = 24)) +
-    guides(color = guide_legend(override.aes = list(size = 16), nrow=1, byrow=TRUE)) 
+    guides(color = guide_legend(override.aes = list(size = 16), nrow=1, byrow=TRUE))
   print(plot)
   dev.off()
   
@@ -179,8 +185,9 @@ mobility_plot <- function(dir_name, dates, restrictions, response, infection_rat
     labs(x = "Date", y = "Values", color = "Type", title = country_long) +
     theme_bw() +
     scale_color_manual(values = c("#494949", "#ae5a41", "#ff8b94")) +
+    ylim(-1, 1) +
     theme(legend.position = "bottom", title = element_text(size = 34), axis.title = element_text(size = 26), axis.text = element_text(size = 22), legend.title = element_text(size = 30), legend.text = element_text(size = 24)) +
-    guides(color = guide_legend(override.aes = list(size = 16), nrow=1, byrow=TRUE)) 
+    guides(color = guide_legend(override.aes = list(size = 16), nrow=1, byrow=TRUE))
   print(plot)
   dev.off()
   
@@ -216,9 +223,13 @@ mobility_plot <- function(dir_name, dates, restrictions, response, infection_rat
     theme_bw() +
     scale_color_manual(values = c("#ae5a41", "#494949", "#ff8b94")) +
     theme(legend.position = "bottom", title = element_text(size = 34), axis.title = element_text(size = 26), axis.text = element_text(size = 22), legend.title = element_text(size = 30), legend.text = element_text(size = 24)) +
-    guides(color = guide_legend(override.aes = list(size = 16), nrow=1, byrow=TRUE)) 
+    guides(color = guide_legend(override.aes = list(size = 16), nrow=1, byrow=TRUE))
+  
+  if(mob_type == "Facebook") plot <- plot + ylim(0, 1) else plot <- plot + ylim(-1, 1)
   print(plot)
   dev.off()
+  
+  plots[[length(plots) + 1]] <- plot
   
   
   date <- c(rep(dates$date[corr_indeces], 3))
@@ -252,7 +263,9 @@ mobility_plot <- function(dir_name, dates, restrictions, response, infection_rat
     theme_bw() +
     scale_color_manual(values = c("#494949", "#ff8b94")) +
     theme(legend.position = "bottom", title = element_text(size = 34), axis.title = element_text(size = 26), axis.text = element_text(size = 22), legend.title = element_text(size = 30), legend.text = element_text(size = 24)) +
-    guides(color = guide_legend(override.aes = list(size = 16), nrow=1, byrow=TRUE)) 
+    guides(color = guide_legend(override.aes = list(size = 16), nrow=1, byrow=TRUE))
+  
+  if(mob_type == "Facebook") plot <- plot + ylim(0, 1) else plot <- plot + ylim(-1, 1)
   print(plot)
   dev.off()
   
@@ -271,6 +284,75 @@ mobility_plot <- function(dir_name, dates, restrictions, response, infection_rat
     scale_color_manual(values = c("#494949", "#ff8b94")) +
     theme(legend.position = "bottom", title = element_text(size = 34), axis.title = element_text(size = 26), axis.text = element_text(size = 22), legend.title = element_text(size = 30), legend.text = element_text(size = 24)) +
     guides(color = guide_legend(override.aes = list(size = 16), nrow=1, byrow=TRUE)) 
+  print(plot)
+  dev.off()
+  
+  return(plots)
+}
+
+# Generate preliminary plots for each country using Facebook and Google data.
+#
+# Inputs:
+#   - dir_name:              directory in which save the plots
+#   - plots_Facebook:        Facebook's plots
+#   - plots_Google:          Google's plots
+preliminary_plots <- function(dir_name, plots_Facebook, plots_Google){
+  png(paste0(dir_name, "/preliminary_analysis_Facebook_1.png"), units="in", width=40, height=40, res=150)
+  plot <- (plots_Facebook[[5]] + plots_Facebook[[17]]) / (plots_Facebook[[23]] + plots_Facebook[[3]]) / (plots_Facebook[[13]] + plots_Facebook[[25]]) +
+    plot_layout(guides = "collect", axis_titles = "collect") &
+    theme(legend.position = "bottom", legend.box = "vertical", title = element_text(size = 44), axis.title = element_text(size = 40), axis.text = element_text(size = 36), legend.title = element_text(size = 44), legend.text = element_text(size = 38))
+  print(plot)
+  dev.off()
+  
+  png(paste0(dir_name, "/preliminary_analysis_Facebook_2.png"), units="in", width=40, height=55, res=150)
+  plot <- (plots_Facebook[[7]] + plots_Facebook[[9]]) / (plots_Facebook[[1]] + plots_Facebook[[15]]) / (plots_Facebook[[11]] + plots_Facebook[[21]]) / (plots_Facebook[[19]] + plot_spacer()) +
+    plot_layout(guides = "collect", axis_titles = "collect") &
+    theme(legend.position = "bottom", legend.box = "vertical", title = element_text(size = 48), axis.title = element_text(size = 44), axis.text = element_text(size = 40), legend.title = element_text(size = 48), legend.text = element_text(size = 42))
+  print(plot)
+  dev.off()
+  
+  
+  png(paste0(dir_name, "/preliminary_analysis_Google_1.png"), units="in", width=40, height=40, res=150)
+  plot <- (plots_Google[[5]] + plots_Google[[17]]) / (plots_Google[[23]] + plots_Google[[3]]) / (plots_Google[[13]] + plots_Google[[25]]) +
+    plot_layout(guides = "collect", axis_titles = "collect") &
+    theme(legend.position = "bottom", legend.box = "vertical", title = element_text(size = 44), axis.title = element_text(size = 40), axis.text = element_text(size = 36), legend.title = element_text(size = 44), legend.text = element_text(size = 38))
+  print(plot)
+  dev.off()
+  
+  png(paste0(dir_name, "/preliminary_analysis_Google_2.png"), units="in", width=40, height=55, res=150)
+  plot <- (plots_Google[[7]] + plots_Google[[9]]) / (plots_Google[[1]] + plots_Google[[15]]) / (plots_Google[[11]] + plots_Google[[21]])  / (plots_Google[[19]] + plot_spacer()) +
+    plot_layout(guides = "collect", axis_titles = "collect") &
+    theme(legend.position = "bottom", legend.box = "vertical", title = element_text(size = 48), axis.title = element_text(size = 44), axis.text = element_text(size = 40), legend.title = element_text(size = 48), legend.text = element_text(size = 42))
+  print(plot)
+  dev.off()
+  
+  
+  png(paste0(dir_name, "/preliminary_analysis_Facebook_avg_1.png"), units="in", width=40, height=40, res=150)
+  plot <- (plots_Facebook[[6]] + plots_Facebook[[18]]) / (plots_Facebook[[24]] + plots_Facebook[[4]]) / (plots_Facebook[[14]] + plots_Facebook[[26]]) +
+    plot_layout(guides = "collect", axis_titles = "collect") &
+    theme(legend.position = "bottom", legend.box = "vertical", title = element_text(size = 44), axis.title = element_text(size = 40), axis.text = element_text(size = 36), legend.title = element_text(size = 44), legend.text = element_text(size = 38))
+  print(plot)
+  dev.off()
+  
+  png(paste0(dir_name, "/preliminary_analysis_Facebook_avg_2.png"), units="in", width=40, height=55, res=150)
+  plot <- (plots_Facebook[[8]] + plots_Facebook[[10]]) / (plots_Facebook[[2]] + plots_Facebook[[16]]) / (plots_Facebook[[12]] + plots_Facebook[[22]]) / (plots_Facebook[[20]] + plot_spacer()) +
+    plot_layout(guides = "collect", axis_titles = "collect") &
+    theme(legend.position = "bottom", legend.box = "vertical", title = element_text(size = 48), axis.title = element_text(size = 44), axis.text = element_text(size = 40), legend.title = element_text(size = 48), legend.text = element_text(size = 42))
+  print(plot)
+  dev.off()
+  
+  
+  png(paste0(dir_name, "/preliminary_analysis_Google_avg_1.png"), units="in", width=40, height=40, res=150)
+  plot <- (plots_Google[[6]] + plots_Google[[18]]) / (plots_Google[[24]] + plots_Google[[4]]) / (plots_Google[[14]] + plots_Google[[26]]) +
+    plot_layout(guides = "collect", axis_titles = "collect") &
+    theme(legend.position = "bottom", legend.box = "vertical", title = element_text(size = 44), axis.title = element_text(size = 40), axis.text = element_text(size = 36), legend.title = element_text(size = 44), legend.text = element_text(size = 38))
+  print(plot)
+  dev.off()
+  
+  png(paste0(dir_name, "/preliminary_analysis_Google_avg_2.png"), units="in", width=40, height=55, res=150)
+  plot <- (plots_Google[[8]] + plots_Google[[10]]) / (plots_Google[[2]] + plots_Google[[16]]) / (plots_Google[[12]] + plots_Google[[22]])  / (plots_Google[[20]] + plot_spacer()) +
+    plot_layout(guides = "collect", axis_titles = "collect") &
+    theme(legend.position = "bottom", legend.box = "vertical", title = element_text(size = 48), axis.title = element_text(size = 44), axis.text = element_text(size = 40), legend.title = element_text(size = 48), legend.text = element_text(size = 42))
   print(plot)
   dev.off()
 }
@@ -395,11 +477,11 @@ boxplots <- function(model_data_global){
   df$type[which(df$type == "retail_and_recreation")] <- "Retail and recreation (Google)"
   df$type[which(df$type == "grocery_and_pharmacy_stores")] <- "Grocery and pharmacy stores (Google)"
   df$type[which(df$type == "masks")] <- "Masks (Facebook)"
-  df$type[which(df$type == "StringencyIndex_Average")] <- "Complement of stringency index (OxCGRT)"
+  df$type[which(df$type == "StringencyIndex_Average")] <- "Complement of Stringency Index (OxCGRT)"
   df$type[which(df$type == "workplaces")] <- "Workplaces (Google)"
-  df$type[which(df$type == "infection_rates")] <- "Infection rates (Sybil)"
+  df$type[which(df$type == "infection_rates")] <- "Infection Rates (Sybil)"
   
-  df$type <- factor(df$type, levels = c("Grocery and pharmacy stores (Google)", "Retail and recreation (Google)", "Workplaces (Google)", "Transit stations (Google)", "Residential (Google)", "Masks (Facebook)", "Complement of stringency index (OxCGRT)", "Infection rates (Sybil)"))
+  df$type <- factor(df$type, levels = c("Grocery and pharmacy stores (Google)", "Retail and recreation (Google)", "Workplaces (Google)", "Transit stations (Google)", "Residential (Google)", "Masks (Facebook)", "Complement of Stringency Index (OxCGRT)", "Infection Rates (Sybil)"))
   
   png("PreliminaryPlots.png", units="in", width=45, height=30, res=150)
   plot <- ggplot(df) +

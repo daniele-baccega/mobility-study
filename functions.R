@@ -310,7 +310,7 @@ load_Facebook_mobility_data <- function(country_long, dir_name_backup, country_s
              grocery_and_pharmacy_stores = rollmean(C0_2.1 / (C0_2.1 + C0_2.2), k, align = "center", na.pad = TRUE),
              transit_stations = rollmean(C0_6.1 / (C0_6.1 + C0_6.2), k, align = "center", na.pad = TRUE),
              retail_and_recreation = rollmean((C0_3.1 + C0_5.1) / (C0_3.1 + C0_3.2 + C0_5.1 + C0_5.2), k, align = "center", na.pad = TRUE),
-             masks = rollmean(1- ((1 * C5.1 + 0.8 * C5.2 + 0.5 * C5.3 + 0.2 * C5.4 + 0 * C5.5) / (C5.1 + C5.2 + C5.3 + C5.4 + C5.5)), k, align = "center", na.pad = TRUE),
+             masks = rollmean(1- ((1 * C5.1 + 0.75 * C5.2 + 0.5 * C5.3 + 0.25 * C5.4 + 0 * C5.5) / (C5.1 + C5.2 + C5.3 + C5.4 + C5.5)), k, align = "center", na.pad = TRUE),
              direct_contacts = rollmean((2.5 * C2.1 + 7 * C2.2 + 14.5 * C2.3 + 20 * C2.4) / (2.5 * C2.1 + 7 * C2.2 + 14.5 * C2.3 + 20 * C2.4 + C2.NA), k, align = "center", na.pad = TRUE),
              people_slept = rollmean(1 - Finished / E5, k, align = "center", na.pad = TRUE),
              num_rooms = rollmean(1 - Finished / E7, k, align = "center", na.pad = TRUE)) %>%
@@ -630,7 +630,8 @@ compute_correlations <- function(infections_rates, trajectories, restrictions_st
 #
 # Output:
 #   - errors:                             RMSE and NMAE on the test set of XGBoost model
-xgboost_fromrestomob_8020_model <- function(dir_name_models, country_long, data, dir_name_regression_plots_xgboost, kfolds, errors, mobility_types, restrictions_all){
+xgboost_fromrestomob_8020_model <- function(dir_name_models, country_long, data, dir_name_regression_plots_xgboost, kfolds, errors, mobility_types, restrictions_all, plots_XGBoost){
+  mobility_string <- c("residential"="Residential", "workplaces"="Workplaces", "grocery_and_pharmacy_stores"="Grocery and pharmacy stores", "transit_stations"="Transit stations", "retail_and_recreation"="Retail and recreation", "masks"="Masks")
   for(m in 1:length(mobility_types)){
     errors_local <- data.frame(country=country_long, mobility=mobility_types[[m]], rmse=0, nmae=0)
     for(k in seq(1, kfolds)){
@@ -658,16 +659,30 @@ xgboost_fromrestomob_8020_model <- function(dir_name_models, country_long, data,
       
       colors <- c("Real"="#494949", "Predicted"="#ff8b94")
       
+      X_test$y_test <- y_test
+      X_test$pred <- pred
+      
       png(paste0(dir_name_regression_plots_xgboost, "fitted_test_set_", mobility_types[[m]], "_", country_long, "_fold", k, ".png"), units="in", width=34, height=15, res=300)
-      p <- ggplot() +
+      p <- ggplot(X_test) +
         theme_bw() +
-        geom_point(aes(x = X_test$date, y = y_test, color = 'Real'), size = 2) +
-        geom_point(aes(x = X_test$date, y = pred, color = 'Predicted'), size = 2) +
-        theme(legend.position = "bottom", legend.box = "vertical", panel.spacing = unit(1, "cm"), legend.key.size = unit(1.5, 'cm'), axis.text=element_text(size=25), axis.title=element_text(size=20, face="bold"), plot.title = element_text(size=40, face="bold"), legend.title=element_text(size=40, face="bold"), legend.text=element_text(size=38), strip.text.x = element_blank()) +
-        labs(x = "Date", y = "Infection rates", color = "Data") +
+        geom_point(aes(x = date, y = y_test, color = 'Real'), size = 5) +
+        geom_point(aes(x = date, y = pred, color = 'Predicted'), size = 5) +
+        theme(
+          legend.position = "bottom",
+          legend.box = "vertical",
+          plot.title = element_text(size = 40, face = "bold", hjust = 0.5),
+          axis.title = element_text(size = 35),
+          axis.text = element_text(size = 35),
+          legend.title = element_text(size = 45, face = "bold"),
+          legend.text = element_text(size = 40)
+        ) +
+        labs(title=mobility_string[mobility_types[[m]]], x = "Date", y = "Value", color = "Data") +
         scale_color_manual(values = colors)
       print(p)
       dev.off()
+      
+      if(k == 1)
+        saveRDS(p, paste0(dir_name_regression_plots_xgboost, "fitted_test_set_", mobility_types[[m]], "_", country_long, "_fold", k, ".RDs"))
       
       errors_local$rmse <- errors_local$rmse + compute.rmse(pred, y_test)
       errors_local$nmae <- errors_local$nmae + compute.nmae(pred, y_test)
@@ -723,16 +738,30 @@ xgboost_fromobtoinfrates_8020_model <- function(dir_name_models, country_long, d
     
     colors <- c("Real"="#494949", "Predicted"="#ff8b94")
     
+    X_test$y_test <- y_test
+    X_test$pred <- pred
+    
     png(paste0(dir_name_regression_plots_xgboost, "fitted_test_set_", country_long, "_fold", k, ".png"), units="in", width=34, height=15, res=300)
-    p <- ggplot() +
+    p <- ggplot(X_test) +
       theme_bw() +
-      geom_point(aes(x = X_test$date, y = y_test, color = 'Real'), size = 2) +
-      geom_point(aes(x = X_test$date, y = pred, color = 'Predicted'), size = 2) +
-      theme(legend.position = "bottom", legend.box = "vertical", panel.spacing = unit(1, "cm"), legend.key.size = unit(1.5, 'cm'), axis.text=element_text(size=25), axis.title=element_text(size=20, face="bold"), plot.title = element_text(size=40, face="bold"), legend.title=element_text(size=40, face="bold"), legend.text=element_text(size=38), strip.text.x = element_blank()) +
-      labs(x = "Date", y = "Infection rates", color = "Data") +
+      geom_point(aes(x = date, y = y_test, color = 'Real'), size = 5) +
+      geom_point(aes(x = date, y = pred, color = 'Predicted'), size = 5) +
+      theme(
+        legend.position = "bottom",
+        legend.box = "vertical",
+        plot.title = element_text(size = 40, face = "bold", hjust = 0.5),
+        axis.title = element_text(size = 35),
+        axis.text = element_text(size = 35),
+        legend.title = element_text(size = 45, face = "bold"),
+        legend.text = element_text(size = 40)
+      ) +
+      labs(title= gsub("_", " ", country_long), x = "Date", y = "Infection rates", color = "Data") +
       scale_color_manual(values = colors)
     print(p)
     dev.off()
+    
+    if(k == 1)
+      saveRDS(p, paste0(dir_name_regression_plots_xgboost, "fitted_test_set_", country_long, "_fold", k, ".RDs"))
     
     errors_local$rmse <- errors_local$rmse + compute.rmse(pred, y_test)
     errors_local$nmae <- errors_local$nmae + compute.nmae(pred, y_test)

@@ -19,6 +19,7 @@ library(countrycode)
 library(plotfunctions)
 library(reshape)
 library(MoMAColors)
+library(scales)
 library(xgboost)
 library(cluster)
 library(stringr)
@@ -236,6 +237,9 @@ initial_date <- global_initial_date
 dates <- dates %>%
   filter(date >= initial_date, date <= final_date)
 
+
+plots_Facebook <- list()
+plots_Google <- list()
 # Filtering data and some initial plots
 for(i in seq(1, nrow(countries))){
   # filtering data
@@ -347,17 +351,35 @@ for(i in seq(1, nrow(countries))){
   
   # Mobility plot
   infection_rates_I_plot(dir_name_plots, data_countries[[i]]$country_long_en, data_countries[[i]]$infection_rates_global, data_countries[[i]]$SIRD_global, corr_method)
-  mobility_plot(dir_name_plots, global_dates, data_countries[[i]]$restrictions_global, data_countries[[i]]$response_Google_global, data_countries[[i]]$infection_rates_global, data_countries[[i]]$country_long_en, "Google")
-  mobility_plot(dir_name_plots, dates, data_countries[[i]]$restrictions, data_countries[[i]]$response_Facebook, data_countries[[i]]$infection_rates, data_countries[[i]]$country_long_en, "Facebook")
+  plots_Google <- mobility_plot(dir_name_plots, global_dates, data_countries[[i]]$restrictions_global, data_countries[[i]]$response_Google_global, data_countries[[i]]$infection_rates_global, data_countries[[i]]$country_long_en, "Google", plots_Google)
+  plots_Facebook <- mobility_plot(dir_name_plots, dates, data_countries[[i]]$restrictions, data_countries[[i]]$response_Facebook, data_countries[[i]]$infection_rates, data_countries[[i]]$country_long_en, "Facebook", plots_Facebook)
   
   # XGBoost for missing data
   xgboost_fromrestomob_8020_errors <- xgboost_fromrestomob_8020_model(dir_name_models, data_countries[[i]]$country_long_en, data_countries[[i]]$model_data, dir_name_regression_plots_xgboost_fromrestomob, kfolds, xgboost_fromrestomob_8020_errors, mobility_types, data_countries[[i]]$restrictions_all)
-  xgboost_fromobtoinfrates_8020_errors <- xgboost_fromobtoinfrates_8020_model(dir_name_models, data_countries[[i]]$country_long_en, data_countries[[i]]$model_data, dir_name_regression_plots_xgboost_fromobtoinfrates, kfolds, xgboost_fromobtoinfrates_8020_errors)
   
+  p1 <- readRDS(paste0(dir_name_regression_plots_xgboost_fromrestomob, "fitted_test_set_", mobility_types[[1]], "_", data_countries[[i]]$country_long_en, "_fold1.RDs"))
+  p2 <- readRDS(paste0(dir_name_regression_plots_xgboost_fromrestomob, "fitted_test_set_", mobility_types[[2]], "_", data_countries[[i]]$country_long_en, "_fold1.RDs"))
+  p3 <- readRDS(paste0(dir_name_regression_plots_xgboost_fromrestomob, "fitted_test_set_", mobility_types[[3]], "_", data_countries[[i]]$country_long_en, "_fold1.RDs"))
+  p4 <- readRDS(paste0(dir_name_regression_plots_xgboost_fromrestomob, "fitted_test_set_", mobility_types[[4]], "_", data_countries[[i]]$country_long_en, "_fold1.RDs"))
+  p5 <- readRDS(paste0(dir_name_regression_plots_xgboost_fromrestomob, "fitted_test_set_", mobility_types[[5]], "_", data_countries[[i]]$country_long_en, "_fold1.RDs"))
+  p6 <- readRDS(paste0(dir_name_regression_plots_xgboost_fromrestomob, "fitted_test_set_", mobility_types[[6]], "_", data_countries[[i]]$country_long_en, "_fold1.RDs"))
+  
+  p <- (p1 + p2) / (p3 + p4) / (p5 + p6) +
+    plot_annotation(title = gsub("_", " ", data_countries[[i]]$country_long_en), theme = theme(plot.title = element_text(size = 55, face = "bold"))) +
+    plot_layout(guides = "collect", axis_titles = "collect") &
+    theme(legend.position = "bottom", legend.box = "vertical")
+  
+  png(paste0(dir_name_regression_plots_xgboost_fromrestomob, "fitted_test_set_", data_countries[[i]]$country_long_en, ".png"), units="in", width=40, height=30, res=300)
+  print(p)
+  dev.off()
+  
+  
+  xgboost_fromobtoinfrates_8020_errors <- xgboost_fromobtoinfrates_8020_model(dir_name_models, data_countries[[i]]$country_long_en, data_countries[[i]]$model_data, dir_name_regression_plots_xgboost_fromobtoinfrates, kfolds, xgboost_fromobtoinfrates_8020_errors)
+
   # XGBoost (100% training for feature importance)
   xgboost_fromrestomob_barplot <- xgboost_fromrestomob_100_model(dir_name_models, data_countries[[i]]$country_long_en, data_countries[[i]]$model_data, dir_name_regression_plots_xgboost_fromrestomob, mobility_types, data_countries[[i]]$restrictions_all, xgboost_fromrestomob_barplot)
   xgboost_fromobtoinfrates_barplot <- xgboost_fromobtoinfrates_100_model(dir_name_models, data_countries[[i]]$country_long_en, data_countries[[i]]$model_data, dir_name_regression_plots_xgboost_fromobtoinfrates, xgboost_fromobtoinfrates_barplot)
-  
+
   
   
   
@@ -425,6 +447,38 @@ saveRDS(model_data_fromrestomob_global, paste0(dir_name_models, "model_data_from
 saveRDS(model_data_ratios_global, paste0(dir_name_models, "model_data_ratios_global.RDs"))
 
 saveRDS(data_countries, paste0(dir_name_models, "data_countries.RDs"))
+
+preliminary_plots(dir_name_plots, plots_Facebook, plots_Google)
+
+p1 <- readRDS(paste0(dir_name_regression_plots_xgboost_fromobtoinfrates, "fitted_test_set_", data_countries[[1]]$country_long_en, "_fold1.RDs"))
+p2 <- readRDS(paste0(dir_name_regression_plots_xgboost_fromobtoinfrates, "fitted_test_set_", data_countries[[2]]$country_long_en, "_fold1.RDs"))
+p3 <- readRDS(paste0(dir_name_regression_plots_xgboost_fromobtoinfrates, "fitted_test_set_", data_countries[[3]]$country_long_en, "_fold1.RDs"))
+p4 <- readRDS(paste0(dir_name_regression_plots_xgboost_fromobtoinfrates, "fitted_test_set_", data_countries[[4]]$country_long_en, "_fold1.RDs"))
+p5 <- readRDS(paste0(dir_name_regression_plots_xgboost_fromobtoinfrates, "fitted_test_set_", data_countries[[5]]$country_long_en, "_fold1.RDs"))
+p6 <- readRDS(paste0(dir_name_regression_plots_xgboost_fromobtoinfrates, "fitted_test_set_", data_countries[[6]]$country_long_en, "_fold1.RDs"))
+p7 <- readRDS(paste0(dir_name_regression_plots_xgboost_fromobtoinfrates, "fitted_test_set_", data_countries[[7]]$country_long_en, "_fold1.RDs"))
+p8 <- readRDS(paste0(dir_name_regression_plots_xgboost_fromobtoinfrates, "fitted_test_set_", data_countries[[8]]$country_long_en, "_fold1.RDs"))
+p9 <- readRDS(paste0(dir_name_regression_plots_xgboost_fromobtoinfrates, "fitted_test_set_", data_countries[[9]]$country_long_en, "_fold1.RDs"))
+p10 <- readRDS(paste0(dir_name_regression_plots_xgboost_fromobtoinfrates, "fitted_test_set_", data_countries[[10]]$country_long_en, "_fold1.RDs"))
+p11 <- readRDS(paste0(dir_name_regression_plots_xgboost_fromobtoinfrates, "fitted_test_set_", data_countries[[11]]$country_long_en, "_fold1.RDs"))
+p12 <- readRDS(paste0(dir_name_regression_plots_xgboost_fromobtoinfrates, "fitted_test_set_", data_countries[[12]]$country_long_en, "_fold1.RDs"))
+p13 <- readRDS(paste0(dir_name_regression_plots_xgboost_fromobtoinfrates, "fitted_test_set_", data_countries[[13]]$country_long_en, "_fold1.RDs"))
+
+p <- (p3 + p9) / (p12 + p2) / (p7 + p13) +
+  plot_layout(guides = "collect", axis_titles = "collect") &
+  theme(legend.position = "bottom", legend.box = "vertical")
+
+png(paste0(dir_name_regression_plots_xgboost_fromobtoinfrates, "fitted_test_set_countries1.png"), units="in", width=40, height=30, res=300)
+print(p)
+dev.off()
+
+p <- (p4 + p5) / (p12 + p8) / (p6 + p11) / (p10 + plot_spacer()) +
+  plot_layout(guides = "collect", axis_titles = "collect") &
+  theme(legend.position = "bottom", legend.box = "vertical")
+
+png(paste0(dir_name_regression_plots_xgboost_fromobtoinfrates, "fitted_test_set_countries2.png"), units="in", width=40, height=40, res=300)
+print(p)
+dev.off()
 
 
 
